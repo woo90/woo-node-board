@@ -1,0 +1,41 @@
+<script>
+	function sum(arr) {
+		return new Promise((resolve, reject) => {
+			let result = 0;
+			if(typeof arr === 'object') {
+				for(var i in arr) result += arr[i];
+				resolve(result); 
+			}
+			else reject('배열만 계산할 수 있습니다.');
+		});
+	}
+
+	function multi(value) {
+		return new Promise((resolve, reject) => {
+			if(typeof value === 'number') resolve(value * value);
+			else reject('인자는 숫자만 가능합니다.');
+		});
+	}
+
+	function exp(value) {
+		return new Promise((resolve, reject) => {
+			resolve("전달된 값은 " + value + " 입니다.");
+		});
+	}
+
+
+	async function calc() {
+		try {
+			const arr = [1, 2, 3, 4, 5];
+			const r = await sum([...arr]);
+			const r2 = await multi(r);
+			const r3 = await exp(r2);
+			console.log(r, r2, r3);
+		}
+		catch(e) {
+			console.log(e);
+		}
+	}
+
+	calc();
+</script>
