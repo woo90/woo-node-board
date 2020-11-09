@@ -44,5 +44,6 @@ app.get('/book/list', (req, res) => {
 			lists: r
 		}
 		res.render('book/list', pug);
+		console.log(r);
 	});
 });
