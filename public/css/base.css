@@ -9,7 +9,7 @@ ul, li, p, div, form, h1, h2, h3, h4, h5, header, footer, section, aside, articl
   padding: 0;
 }
 
-a:link, a:visited, a:active, a:hover {
+a:link:not(.btn), a:visited:not(.btn), a:active:not(.btn), a:hover:not(.btn) {
   color: inherit;
 }
 
@@ -30,6 +30,9 @@ header.header-wrapper .navi-wrapper {
 }
 header.header-wrapper .navi-wrapper .navi {
   padding: 1em;
+}
+header.header-wrapper .navi-wrapper .navi.active {
+  background-color: #7c106a;
 }
 
 .title-bar {
