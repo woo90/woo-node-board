@@ -22,11 +22,6 @@ router.get(['/', '/list'], async(req, res, next) => {
 	}
 	catch(e) {
 		connect.release();
-		e.msg = `
-		${e.code ? e.code : ''}\n
-		${e.errno ? e.errno : ''}\n
-		${e.sqlState ? e.sqlState : ''}\n
-		${e.sqlMessage ? e.sqlMessage : ''}`;
 		next(e);
 	}
 });
