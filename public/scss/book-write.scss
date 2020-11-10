@@ -1,0 +1,6 @@
+@use 'color';
+
+.td-write {
+	.title {border-bottom: 2px solid #f8b4b4; font-weight: bold;}
+	textarea {height: 150px;}
+}
