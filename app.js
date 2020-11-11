@@ -2,6 +2,25 @@
 const express = require('express');
 const app = express();
 const path = require('path');
+const fs = require('fs');
+const moment = require('moment');
+const { v4: uuidv4} = require('uuid');
+
+const multer  =  require ('multer');
+const storage  =  multer.diskStorage ( { 
+	destination :  (req , file , cb) => { 
+		var folder = path.join(__dirname, './storage', moment().format('YYMMDD'));
+		if(!fs.existsSync(folder)) fs.mkdirSync(folder);
+		cb(null, folder);
+	}, 
+	filename : (req , file , cb) => {
+		var ext = path.extname(file.originalname);
+		var name = moment().format('YYMMDD') + '-' + uuidv4() + ext;
+		cb(null, name);
+	} 
+});
+const upload  =  multer ({storage});
+
 
 /** 라우터 등록 **********************/
 const testRouter = require('./routes/test');
@@ -28,16 +47,28 @@ app.use(express.urlencoded({extended: false}));
 
 /** 라우터설정 **********************/
 app.use('/', express.static(path.join(__dirname, './public')));
+app.use('/upload', express.static(path.join(__dirname, './storage')));
 app.use('/test', testRouter);
 app.use('/book', bookRouter);
+
+
+/** 멀터 임시 **********************/
+app.use('/multer', (req, res, next) => {
+	res.render('multer/write.pug');
+});
+
+
+app.post('/multer/save', upload.single('upfile'), (req, res, next) => {
+	res.json(req.body);
+});
 
 /** 에러 처리 **********************/
 app.use(errorRouter);
 app.use((err, req, res, next) => {
 	const pug = {
-		img : err.img ? err.img : 500,
-		code : err.code ? err.code : 'Unexpercted Error',
-		msg: err.error ? err.error : err
+		img : err.img || 500,
+		code : err.code || 'Unexpercted Error',
+		msg: err.error || err
 	}
 	res.render('error/error.pug', pug);
 });

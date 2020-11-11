@@ -1,0 +1,6 @@
+@use 'color';
+
+.tb-write {
+	.title {border-bottom: 2px solid #c2f8b2; font-weight: bold;}
+	textarea {height: 150px;}
+}
