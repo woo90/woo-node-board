@@ -1,17 +1,17 @@
 extends ../layout/lo-minimal.pug
 
 block style
-	link(rel="stylesheet", href="/css/error.css")
+	link(rel="stylesheet" href="/css/error.css")
 
 block content
 	.wrapper
 			.wrap
 				div
-					.ing-wrap
+					.img-wrap
 						img.w-100(src=`/img/${img}.png` alt="에러")
 					.code-wrap
-						h3= `ERROR ${code}.`
+						h3= `ERROR: ${code}.`
 				hr
-				.error-wrap=`${msg}`
+				.error-wrap= `${msg}`
 				.text-center
-					a.btn.btn-primaty(href="/") 메인페이지로 돌아가기
+					a.btn.btn-primary(href="/") 메인페이지로 돌아가기

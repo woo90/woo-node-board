@@ -1,19 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const moment = require('moment');
+const path = require('path');
 const error = require('http-errors');
 const { pool } = require('../modules/mysql-conn');
-const { alert } = require('../modules/utill');
+const { alert } = require('../modules/util');
+const { upload, allowExt, imgExt } = require('../modules/multer-conn');
 
-router.get(['/', '/list'], async(req, res, next) => {
+router.get(['/', '/list'], async (req, res, next) => {
 	let connect, rs, sql, values, pug;
-	try{
+	try {
 		sql = 'SELECT * FROM books ORDER BY id DESC LIMIT 0, 5';
 		connect = await pool.getConnection();
 		rs = await connect.query(sql);
 		connect.release();
-		for(let v of rs[0]) v.wdate = moment(v.wdate).format('YYYY-MM-DD');
-		pug ={
+		for(let v of rs[0]) {
+			v.wdate = moment(v.wdate).format('YYYY-MM-DD');
+			if(v.savefile) v.icon = path.extname(v.savefile).replace('.', '').toUpperCase();
+		}
+		pug = {
 			file: 'book-list',
 			title: '도서 리스트',
 			titleSub: '고전도서 리스트',
@@ -27,29 +32,31 @@ router.get(['/', '/list'], async(req, res, next) => {
 	}
 });
 
-router.get('/write',(req, res, next) => {
-	pug ={
+router.get('/write', (req, res, next) => {
+	const pug = {
 		file: 'book-write',
 		title: '도서 작성',
-		titleSub: '등록할 도서를 작성하세요.'
+		titleSub: '등록할 도서를 작성하세요.',
+		allowExt
 	}
 	res.render('book/write', pug);
 });
 
-router.get( '/write/:id', async (req, res, next) => {
+router.get('/write/:id', async (req, res, next) => {
 	let connect, rs, sql, values, pug;
 	try {
-		sql = 'SELECT * FROM books WHERE id = ?';
+		sql = 'SELECT * FROM books WHERE id=?';
 		values = [req.params.id];
 		connect = await pool.getConnection();
 		rs = await connect.query(sql, values);
 		connect.release();
-		rs[0][0].wdate = moment(rs[0][0].wdate).format('YYYY-MM-DD')
-		pug ={
+		rs[0][0].wdate = moment(rs[0][0].wdate).format('YYYY-MM-DD');
+		pug = {
 			file: 'book-update',
 			title: '도서 수정',
-			titleSub: '수정할 도서 내용를 작성하세요.',
-			book: rs[0][0]
+			titleSub: '수정할 도서 내용을 작성하세요.',
+			book: rs[0][0],
+			allowExt
 		}
 		res.render('book/write', pug);
 	}
@@ -59,18 +66,30 @@ router.get( '/write/:id', async (req, res, next) => {
 	}
 });
 
-router.post('/save', async (req, res, next) => {
+router.post('/save', upload.single('upfile'), async (req, res, next) => {
 	let connect, rs, sql, values, pug;
+	let {title, writer, wdate, content} = req.body;
 	try {
-		const {title, writer, wdate, content} = req.body;
-		values = [title, writer, wdate, content];
-		sql = 'INSERT INTO books SET title=?, writer=?, wdate=?, content=?';
-	
-		connect = await pool.getConnection();
-		const r = await connect.query(sql, values);
-		connect.release();
-	
-		res.redirect('/book/list');
+		if(req.ext && !req.allow) {
+			// 파일을 올렸으나 거부당했을 때
+			res.send(alert(`${req.ext} 는 업로드 할 수 없습니다.`, '/book'));
+		}
+		else{
+			// 파일을 올리지 않았거나, 올렸거나
+			sql = 'INSERT INTO books SET title=?, writer=?, wdate=?, content=?';
+			values = [title, writer, wdate, content];
+			if(req.file) {
+				sql += ', realfile=?, savefile=?, filesize=?';
+				values.push(req.file.originalname);
+				values.push(req.file.filename);
+				values.push(req.file.size);
+			}
+			connect = await pool.getConnection();
+			rs = await connect.query(sql, values);
+			connect.release();
+		
+			res.redirect('/book/list');
+		}
 	}
 	catch(e) {
 		if(connect) connect.release();
@@ -82,7 +101,7 @@ router.post('/save', async (req, res, next) => {
 router.get('/delete/:id', async (req, res, next) => {
 	let connect, rs, sql, values, pug;
 	try {
-		sql=`DELETE FROM books WHERE id=${req.params.id}`;
+		sql = `DELETE FROM books WHERE id=${req.params.id}`;
 		connect = await pool.getConnection();
 		rs = await connect.query(sql);
 		res.send(alert(rs[0].affectedRows > 0 ? '삭제되었습니다.' : '삭제에 실패하였습니다.', '/book'));
@@ -93,7 +112,7 @@ router.get('/delete/:id', async (req, res, next) => {
 	}
 });
 
-router.post('/change', async (req, res, next) => {
+router.post('/change', upload.single('upflie'), async (req, res, next) => {
 	let connect, rs, sql, values, pug;
 	try {
 		var { title, writer, wdate, content, id } = req.body;
@@ -108,6 +127,46 @@ router.post('/change', async (req, res, next) => {
 		if(connect) connect.release();
 		next(error(500, e.sqlMessage));
 	}
+});
+
+router.get('/view/:id', async (req, res, next) => {
+	let connect, rs, sql, values, pug, book;
+	try {
+		sql = 'SELECT * FROM books WHERE id=' + req.params.id;
+		connect = await pool.getConnection();
+		rs = await connect.query(sql);
+		connect.release();
+		book = rs[0][0];
+		book.wdate = moment(book.wdate).format('YYYY-MM-DD');
+		if(book.savefile) {
+			book.file = `/upload/${book.savefile.substr(0, 6)}/${book.savefile}`;
+			if(imgExt.includes(path.extname(book.savefile).replace('.', '').toLowerCase())) {
+				//	/upload/201112/파일명
+				book.src = book.file;
+			}
+		}
+		pug = {
+			file: 'book-view',
+			title: '도서 상세 보기',
+			titleSub: '도서의 내용을 보여줍니다.',
+			book
+		}
+		res.render('book/view', pug);
+	} 
+	catch(e) {
+		if(connect) connect.release();
+		next(error(500, e.sqlMessage));
+	}
+});
+
+router.get('/download', (req, res, next) => {
+	let src = path.join(__dirname, '../storage', req.query.file.substr(0, 6), req.query.file);
+	res.download(src, req.query.name); 
+});
+
+router.get('/remove/:id', (req, res, next) => {
+	if(req.params.id) res.json({ code: 200 });
+	else res.json({ code: 500 });
 });
 
 module.exports = router;

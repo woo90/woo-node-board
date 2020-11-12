@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-router.use( (req, res, next) => {
+router.use((req, res, next) => {
 	const err = new Error();
 	err.img = 404;
 	err.code = 'Page Not Found';

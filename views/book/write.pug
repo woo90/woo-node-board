@@ -1,21 +1,33 @@
 extends ../layout/lo-default.pug
 block content
-	form(name="bookForm" action=`${book ? '/book/change' : '/book/save'}` method="post")
+	form(name="bookForm" action=`${book ? '/book/change' : '/book/save'}` method="post" enctype="multipart/form-data")
 		input(type="hidden" name="id" value=`${book && book.id ? book.id : ''}`)
-		table.table.td-write
+		table.table.tb-write
 			tbody
 				tr
 					td.title 제목
 					td.content
-						input.form-control(type="text" name="title" placeholder="제목을 입력하세요." value=`${book && book.title ? book.title : ''}`)
+						input.form-control(type="text" name="title" placeholder="제목을 입력하세요."
+						value=`${book && book.title ? book.title : ''}`)
 				tr
 					td.title 저자
 					td.content
-						input.form-control(type="text" name="writer" placeholder="저자을 입력하세요." value=`${book && book.writer ? book.writer : ''}`)
+						input.form-control(type="text" name="writer" placeholder="저자를 입력하세요."
+						value=`${book && book.writer ? book.writer : ''}`)
 				tr
 					td.title 발행일
 					td.content
-						input.form-control(type="date" name="wdate" value=`${book && book.wdate ? book.wdate : ''}`)
+						input.form-control(type="date" name="wdate"
+						value=`${book && book.wdate ? book.wdate : ''}`)
+				tr
+					td.title 첨부파일
+					td.content
+						if book && book.savefile
+							.file-wrap.py-2= book.realfile
+								a.ml-2.bt-remove(href=`javascript:onRemove(${book.id})`)
+									i.fa.fa-times-circle
+						input.form-control-file(type="file" name="upfile")
+						.py-2.text-danger= `업로드 가능한 파일은 ${[...allowExt].join(', ')} 입니다.`
 				tr
 					td.title 내용
 					td.content
