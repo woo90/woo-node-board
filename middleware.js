@@ -10,6 +10,6 @@ const middleWare2 = (value) => {
 	}
 }
 
-app.get('/multer', middleWare, middleWare2('booldook'), (req, res, next) => {
+app.get('/multer', middleWare, middleWare2('woo'), (req, res, next) => {
 	res.render('multer/write.pug');
 });

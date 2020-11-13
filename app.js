@@ -23,13 +23,11 @@ app.locals.pretty = true;
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
-
 /** 라우터설정 **********************/
 app.use('/', express.static(path.join(__dirname, './public')));
 app.use('/upload', express.static(path.join(__dirname, './storage')));
 app.use('/test', testRouter);
 app.use('/book', bookRouter);
-
 
 /** 에러 처리 **********************/
 app.use((req, res, next) => {
@@ -44,6 +42,7 @@ app.use((err, req, res, next) => {
 	}
 	res.render('error/error.pug', pug);
 });
+
 
 
 
