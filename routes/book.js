@@ -7,12 +7,19 @@ const error = require('http-errors');
 const { pool, sqlGen } = require('../modules/mysql-conn');
 const { alert, getPath, getExt, txtCut } = require('../modules/util');
 const { upload, allowExt, imgExt } = require('../modules/multer-conn');
+const pager = require('../modules/pager-conn');
 
-router.get(['/', '/list'], async (req, res, next) => {
+router.get(['/', '/list', '/list/:page'], async (req, res, next) => {
 	let connect, rs, pug;
+	let page = req.params.page || 1, totalRecord;
+	req.app.locals.page = page;
 	try {
-		// sql = 'SELECT * FROM books ORDER BY id DESC LIMIT 0, 5';
-		rs = await sqlGen('books', 'S', {order: 'ORDER BY id DESC'});
+		rs = await sqlGen('books', 'S', {field: ['count(id)']});
+		totalRecord = rs[0][0]['count(id)']
+		let pagers = pager(page, totalRecord, {listCnt: 5, pagerCnt: 5});
+
+		//SELECT * FROM books ORDER BY id DESC LIMIT startIdx, listCnt
+		rs = await sqlGen('books', 'S', {order: 'ORDER BY id DESC', limit: [pagers.startIdx, pagers.listCnt]});
 		for(let v of rs[0]) {
 			v.wdate = moment(v.wdate).format('YYYY-MM-DD');
 			if(v.savefile) v.icon = getExt(v.savefile, 'upper');
@@ -22,7 +29,8 @@ router.get(['/', '/list'], async (req, res, next) => {
 			file: 'book-list',
 			title: '도서 리스트',
 			titleSub: '고전도서 리스트',
-			lists: rs[0]
+			lists: rs[0],
+			...pagers
 		}
 		res.render('book/list', pug);
 	}
@@ -148,7 +156,8 @@ router.get('/view/:id', async (req, res, next) => {
 			file: 'book-view',
 			title: '도서 상세 보기',
 			titleSub: '도서의 내용을 보여줍니다.',
-			book
+			book,
+			page: req.app.locals.page
 		}
 		res.render('book/view', pug);
 	}
@@ -191,18 +200,6 @@ module.exports = router;
 // /upload/${book.savefile.substr(0, 6)}/${book.savefile}
 // path.join(__dirname, '../storage', filename.substr(0, 6), filename)
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*
 app.get('/book/list', (req, res) => {
 	pool.getConnection((e, connect) => {
@@ -223,9 +220,6 @@ app.get('/book/list', (req, res) => {
 	});
 });
 */
-
-
-
 
 /*
 // Callback Version : 앞으로 쓰지 않는다.
