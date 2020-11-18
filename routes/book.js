@@ -35,7 +35,6 @@ router.get(['/', '/list', '/list/:page'], async (req, res, next) => {
 		res.render('book/list', pug);
 	}
 	catch(e) {
-		if(connect) connect.release();
 		next(error(500, e.sqlMessage || e));
 	}
 });
@@ -66,7 +65,6 @@ router.get('/write/:id', async (req, res, next) => {
 		res.render('book/write', pug);
 	}
 	catch(e) {
-		if(connect) connect.release();
 		next(error(500, e.sqlMessage || e));
 	}
 });
@@ -89,7 +87,6 @@ router.post('/save', upload.single('upfile'), async (req, res, next) => {
 		}
 	}
 	catch(e) {
-		if(connect) connect.release();
 		next(error(500, e.sqlMessage || e));
 	}
 });
@@ -106,7 +103,6 @@ router.get('/delete/:id', async (req, res, next) => {
 		res.send(alert(rs[0].affectedRows > 0 ? '삭제되었습니다.' : '삭제에 실패하였습니다.', '/book'));
 	}
 	catch(e) {
-		if(connect) connect.release();
 		next(error(500, e.sqlMessage || e));
 	}
 });
@@ -133,7 +129,6 @@ router.post('/change', upload.single('upfile'), async (req, res, next) => {
 		}
 	}
 	catch(e) {
-		if(connect) connect.release();
 		next(error(500, e.sqlMessage || e));
 	}
 });
@@ -162,7 +157,6 @@ router.get('/view/:id', async (req, res, next) => {
 		res.render('book/view', pug);
 	}
 	catch(e) {
-		if(connect) connect.release();
 		next(error(500, e.sqlMessage || e));
 	}
 });
@@ -187,8 +181,6 @@ router.get('/remove/:id', async (req, res, next) => {
 		res.json({ code: 200 });
 	}
 	catch(e) {
-		if(connect) connect.release();
-		e.sql = sql;
 		res.json({ code: 500, error: e });
 	}
 });

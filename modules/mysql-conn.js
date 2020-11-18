@@ -30,13 +30,13 @@ const pool = mysql.createPool({
 
 const sqlGen = async (table, mode, obj) => {
 	let { field=[], data={}, file=null, where=null, order=[], limit=[] } = obj;
-	let sql=null, values=[];
+	let sql=null, values=[], connect=null, rs=null;
 	let temp = Object.entries(data).filter(v => field.includes(v[0]));
 	
-	if(mode == 'I') sql = `INSERT INTO ${table} SET `;
-	if(mode == 'U') sql = `UPDATE ${table} SET `;
-	if(mode == 'D') sql = `DELETE FROM ${table} `;
-	if(mode == 'S') sql = `SELECT ${field.length == 0 ? '*' : field.toString()} FROM ${table} `;
+	if(mode == 'I' || mode == 'i') sql = `INSERT INTO ${table} SET `;
+	if(mode == 'U' || mode == 'u') sql = `UPDATE ${table} SET `;
+	if(mode == 'D' || mode == 'd') sql = `DELETE FROM ${table} `;
+	if(mode == 'S' || mode == 's') sql = `SELECT ${field.length == 0 ? '*' : field.toString()} FROM ${table} `;
 
 	if(file) {
 		temp.push(['savefile', file.filename]); 
@@ -58,24 +58,29 @@ const sqlGen = async (table, mode, obj) => {
 		for(let i in where.fields) {
 			if(i == 0) sql += ` WHERE `;
 			else sql += ` ${where.op} `;
-			if(where.fields[1][2] && where.fields[1][2].toUpperCase() == 'LIKE')
+			if(where.fields[i][2] && where.fields[i][2].toUpperCase() == 'LIKE')
 				sql += ` ${where.fields[i][0]} LIKE '%${where.fields[i][1]}%' `;
 			else
 				sql += ` ${where.fields[i][0]} = '${where.fields[i][1]}' `;
 		}
 	}
-
 	if(order.length > 1) sql += ` ORDER BY ${order[0]} ${order[1]} `;
 	if(limit.length > 1) sql += ` LIMIT ${limit[0]}, ${limit[1]} `;
 
-	if((mode == 'D' || mode =='U') && sql.indexOf('WHERE') == -1) {
+	if((mode == 'D' || mode == 'U') && sql.indexOf('WHERE') == -1) {
 		throw new Error('수정, 삭제는 where절이 필요합니다.');
 	}
-	let connect = await pool.getConnection();
-	let rs = await connect.query(sql, values); 
-	connect.release();
-	
-	return rs;
+	console.log(sql);
+	try {
+		connect = await pool.getConnection();
+		rs = await connect.query(sql, values); 
+		connect.release();
+		return rs;
+	}
+	catch(e) {
+		if(connect) connect.release();
+		throw new Error(e);
+	}
 }
 
 module.exports = { pool, mysql, sqlGen };
