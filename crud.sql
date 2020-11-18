@@ -6,4 +6,4 @@
 -- SELECT * FROM books ORDER BY id ASC;
 -- SELECT * FROM books ORDER BY id DESC;
 -- SELECT * FROM books WHERE id=3;
--- SELECT * FROM books ORDER BY id DESC LIMIT 1, 3;
+ SELECT * FROM books ORDER BY id DESC LIMIT 1, 3;

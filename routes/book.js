@@ -19,7 +19,7 @@ router.get(['/', '/list', '/list/:page'], async (req, res, next) => {
 		let pagers = pager(page, totalRecord, {listCnt: 5, pagerCnt: 5});
 
 		//SELECT * FROM books ORDER BY id DESC LIMIT startIdx, listCnt
-		rs = await sqlGen('books', 'S', {order: 'ORDER BY id DESC', limit: [pagers.startIdx, pagers.listCnt]});
+		rs = await sqlGen('books', 'S', {order: ['id', 'desc'], limit: [pagers.startIdx, pagers.listCnt]});
 		for(let v of rs[0]) {
 			v.wdate = moment(v.wdate).format('YYYY-MM-DD');
 			if(v.savefile) v.icon = getExt(v.savefile, 'upper');
@@ -54,7 +54,7 @@ router.get('/write/:id', async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		// sql = 'SELECT * FROM books WHERE id=?';
-		rs = await sqlGen('books', 'S', {id: req.params.id});
+		rs = await sqlGen('books', 'S', {where: ['id', req.params.id] });
 		rs[0][0].wdate = moment(rs[0][0].wdate).format('YYYY-MM-DD');
 		pug = {
 			file: 'book-update',
@@ -99,10 +99,10 @@ router.get('/delete/:id', async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		// sql = 'SELECT savefile FROM books WHERE id='+req.params.id;
-		rs = await sqlGen('books', 'S', {id: req.params.id});
+		rs = await sqlGen('books', 'S', {where: ['id', req.params.id]});
 		if(rs[0][0].savefile) await fs.remove(getPath(rs[0][0].savefile));
 		// sql = `DELETE FROM books WHERE id=${req.params.id}`;
-		rs = await sqlGen('books', 'D', {id: req.params.id});
+		rs = await sqlGen('books', 'D', {where: ['id', req.params.id]});
 		res.send(alert(rs[0].affectedRows > 0 ? '삭제되었습니다.' : '삭제에 실패하였습니다.', '/book'));
 	}
 	catch(e) {
@@ -120,14 +120,14 @@ router.post('/change', upload.single('upfile'), async (req, res, next) => {
 		else {
 			if(req.file) {
 				// sql = 'SELECT savefile FROM books WHERE id='+req.body.id;
-				rs = await sqlGen('books', 'S', {id: req.body.id, field: ['savefile']});
+				rs = await sqlGen('books', 'S', {where: ['id', req.body.id], field: ['savefile']});
 				if(rs[0][0].savefile) await fs.remove(getPath(rs[0][0].savefile));
 			}
 			rs = await sqlGen('books', 'U', {
 				field: ["title", "wdate", "writer", "content"], 
 				data: req.body, 
 				file: req.file,
-				id: req.body.id
+				where: ['id', req.body.id]
 			});
 			res.send(alert(rs[0].affectedRows > 0 ? '수정되었습니다.' : '수정에 실패하였습니다.', '/book'));
 		}
@@ -142,7 +142,7 @@ router.get('/view/:id', async (req, res, next) => {
 	let connect, rs, pug, book;
 	try {
 		// sql = 'SELECT * FROM books WHERE id=' + req.params.id;
-		rs = await sqlGen('books', 'S', {id: req.params.id});
+		rs = await sqlGen('books', 'S', {where: ['id', req.params.id]});
 		book = rs[0][0];
 		book.wdate = moment(book.wdate).format('YYYY-MM-DD');
 		if(book.savefile) {
@@ -176,11 +176,11 @@ router.get('/remove/:id', async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		// sql = 'SELECT savefile FROM books WHERE id='+req.params.id;
-		rs = await sqlGen('books', 'S', {id: req.params.id, field: ['savefile']});
+		rs = await sqlGen('books', 'S', {where: ['id', req.params.id], field: ['savefile']});
 		await fs.remove(getPath(rs[0][0].savefile));
 		// sql = 'UPDATE books SET savefile=NULL, realfile=NULL, filesize=NULL WHERE id='+req.params.id;
 		rs = await sqlGen('books', 'U', {
-			id: req.params.id, 
+			where: ['id', req.params.id], 
 			field: ['savefile', 'realfile', 'filesize'],
 			data: {savefile:null, realfile:null, filesize:null}
 		});
