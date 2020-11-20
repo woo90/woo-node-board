@@ -12,15 +12,14 @@ const { isUser, isGuest } = require('../modules/auth-conn');
 
 router.get(['/', '/list', '/list/:page'], async (req, res, next) => {
 	let connect, rs, pug;
-	let page = req.params.page || 1, totalRecord;
+	let page = req.params.page || 1, totalRecord ;
 	req.app.locals.page = page;
 	try {
 		rs = await sqlGen('books', 'S', {field: ['count(id)']});
-		totalRecord = rs[0][0]['count(id)']
-		let pagers = pager(page, totalRecord, {listCnt: 5, pagerCnt: 5});
-
-		//SELECT * FROM books ORDER BY id DESC LIMIT startIdx, listCnt
-		rs = await sqlGen('books', 'S', {order: ['id', 'desc'], limit: [pagers.startIdx, pagers.listCnt]});
+		totalRecord = rs[0][0]['count(id)'];
+		let pagers = pager(page, totalRecord);
+		// SELECT * FROM books ORDER BY id DESC LIMIT startIdx, listCnt
+		rs = await sqlGen('books', 'S', {order: ['id', 'desc'], limit: [pagers.startIdx, pagers.listCnt]})
 		for(let v of rs[0]) {
 			v.wdate = moment(v.wdate).format('YYYY-MM-DD');
 			if(v.savefile) v.icon = getExt(v.savefile, 'upper');
@@ -53,8 +52,16 @@ router.get('/write', isUser, (req, res, next) => {
 router.get('/write/:id', isUser, async (req, res, next) => {
 	let connect, rs, pug;
 	try {
-		// sql = 'SELECT * FROM books WHERE id=?';
-		rs = await sqlGen('books', 'S', {where: ['id', req.params.id] });
+		// rs = await sqlGen('books', 'S', { where: ['id', req.params.id] });
+		rs = await sqlGen('books', 'S', { 
+			where: {
+				op: 'AND', 
+				fields: [
+					['id', req.params.id], 
+					['uid', req.session.user.id]
+				]
+			} 
+		});
 		rs[0][0].wdate = moment(rs[0][0].wdate).format('YYYY-MM-DD');
 		pug = {
 			file: 'book-update',
@@ -97,10 +104,26 @@ router.get('/delete/:id', isUser, async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		// sql = 'SELECT savefile FROM books WHERE id='+req.params.id;
-		rs = await sqlGen('books', 'S', {where: ['id', req.params.id]});
+		rs = await sqlGen('books', 'S', {
+			where: {
+				op: 'AND', 
+				fields: [
+					['id', req.params.id], 
+					['uid', req.session.user.id]
+				]
+			}
+		});
 		if(rs[0][0].savefile) await fs.remove(getPath(rs[0][0].savefile));
 		// sql = `DELETE FROM books WHERE id=${req.params.id}`;
-		rs = await sqlGen('books', 'D', {where: ['id', req.params.id]});
+		rs = await sqlGen('books', 'D', {
+			where: {
+				op: 'AND', 
+				fields: [
+					['id', req.params.id], 
+					['uid', req.session.user.id]
+				]
+			} 
+		});
 		res.send(alert(rs[0].affectedRows > 0 ? '삭제되었습니다.' : '삭제에 실패하였습니다.', '/book'));
 	}
 	catch(e) {
@@ -117,14 +140,29 @@ router.post('/change', isUser, upload.single('upfile'), async (req, res, next) =
 		else {
 			if(req.file) {
 				// sql = 'SELECT savefile FROM books WHERE id='+req.body.id;
-				rs = await sqlGen('books', 'S', {where: ['id', req.body.id], field: ['savefile']});
+				rs = await sqlGen('books', 'S', {
+					where: {
+						op: 'AND', 
+						fields: [
+							['id', req.body.id], 
+							['uid', req.session.user.id]
+						]
+					}, 
+					field: ['savefile']
+				});
 				if(rs[0][0].savefile) await fs.remove(getPath(rs[0][0].savefile));
 			}
 			rs = await sqlGen('books', 'U', {
 				field: ["title", "wdate", "writer", "content"], 
 				data: req.body, 
 				file: req.file,
-				where: ['id', req.body.id]
+				where: {
+					op: 'AND', 
+					fields: [
+						['id', req.body.id], 
+						['uid', req.session.user.id]
+					]
+				} 
 			});
 			res.send(alert(rs[0].affectedRows > 0 ? '수정되었습니다.' : '수정에 실패하였습니다.', '/book'));
 		}
@@ -135,6 +173,7 @@ router.post('/change', isUser, upload.single('upfile'), async (req, res, next) =
 });
 
 router.get('/view/:id', async (req, res, next) => {
+	console.log(res.locals.page);
 	let connect, rs, pug, book;
 	try {
 		// sql = 'SELECT * FROM books WHERE id=' + req.params.id;
@@ -171,13 +210,28 @@ router.get('/remove/:id', isUser, async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		// sql = 'SELECT savefile FROM books WHERE id='+req.params.id;
-		rs = await sqlGen('books', 'S', {where: ['id', req.params.id], field: ['savefile']});
+		rs = await sqlGen('books', 'S', {
+			where: {
+				op: 'AND', 
+				fields: [
+					['id', req.params.id], 
+					['uid', req.session.user.id]
+				]
+			}, 
+			field: ['savefile']
+		});
 		await fs.remove(getPath(rs[0][0].savefile));
 		// sql = 'UPDATE books SET savefile=NULL, realfile=NULL, filesize=NULL WHERE id='+req.params.id;
 		rs = await sqlGen('books', 'U', {
-			where: ['id', req.params.id], 
 			field: ['savefile', 'realfile', 'filesize'],
-			data: {savefile:null, realfile:null, filesize:null}
+			data: {savefile:null, realfile:null, filesize:null},
+			where: {
+				op: 'AND', 
+				fields: [
+					['id', req.params.id], 
+					['uid', req.session.user.id]
+				]
+			} 
 		});
 		res.json({ code: 200 });
 	}
@@ -187,6 +241,11 @@ router.get('/remove/:id', isUser, async (req, res, next) => {
 });
 
 module.exports = router;
+
+
+
+
+
 
 
 // 첨부파일 경로
@@ -212,9 +271,7 @@ app.get('/book/list', (req, res) => {
 		});
 	});
 });
-*/
 
-/*
 // Callback Version : 앞으로 쓰지 않는다.
 app.get('/book/list', (req, res) => {
 	connection.query('SELECT * FROM books', function(err, r) {
