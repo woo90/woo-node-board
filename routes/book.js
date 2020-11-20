@@ -8,6 +8,7 @@ const { pool, sqlGen } = require('../modules/mysql-conn');
 const { alert, getPath, getExt, txtCut } = require('../modules/util');
 const { upload, allowExt, imgExt } = require('../modules/multer-conn');
 const pager = require('../modules/pager-conn');
+const { isUser, isGuest } = require('../modules/auth-conn');
 
 router.get(['/', '/list', '/list/:page'], async (req, res, next) => {
 	let connect, rs, pug;
@@ -30,7 +31,6 @@ router.get(['/', '/list', '/list/:page'], async (req, res, next) => {
 			title: '도서 리스트',
 			titleSub: '고전도서 리스트',
 			lists: rs[0],
-			user: req.session.user || null,
 			...pagers
 		}
 		res.render('book/list', pug);
@@ -40,7 +40,7 @@ router.get(['/', '/list', '/list/:page'], async (req, res, next) => {
 	}
 });
 
-router.get('/write', (req, res, next) => {
+router.get('/write', isUser, (req, res, next) => {
 	const pug = {
 		file: 'book-write',
 		title: '도서 작성',
@@ -50,7 +50,7 @@ router.get('/write', (req, res, next) => {
 	res.render('book/write', pug);
 });
 
-router.get('/write/:id', async (req, res, next) => {
+router.get('/write/:id', isUser, async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		// sql = 'SELECT * FROM books WHERE id=?';
@@ -70,7 +70,7 @@ router.get('/write/:id', async (req, res, next) => {
 	}
 });
 
-router.post('/save', upload.single('upfile'), async (req, res, next) => {
+router.post('/save', isUser, upload.single('upfile'), async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		if(req.allow == false) {
@@ -93,7 +93,7 @@ router.post('/save', upload.single('upfile'), async (req, res, next) => {
 });
 
 // DELETE FROM books WHERE id=1 OR id=2 OR id=3;
-router.get('/delete/:id', async (req, res, next) => {
+router.get('/delete/:id', isUser, async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		// sql = 'SELECT savefile FROM books WHERE id='+req.params.id;
@@ -108,7 +108,7 @@ router.get('/delete/:id', async (req, res, next) => {
 	}
 });
 
-router.post('/change', upload.single('upfile'), async (req, res, next) => {
+router.post('/change', isUser, upload.single('upfile'), async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		if(req.allow == false) {
@@ -167,7 +167,7 @@ router.get('/download', (req, res, next) => {
 	res.download(src, req.query.name); 
 });
 
-router.get('/remove/:id', async (req, res, next) => {
+router.get('/remove/:id', isUser, async (req, res, next) => {
 	let connect, rs, pug;
 	try {
 		// sql = 'SELECT savefile FROM books WHERE id='+req.params.id;
