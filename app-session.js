@@ -3,7 +3,8 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const error = require('http-errors');
-const session = require('express-session')
+const session = require('express-session');
+
 
 /** 라우터 등록 **********************/
 
@@ -23,16 +24,17 @@ app.locals.pretty = true;
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
-app.set('trust proxy', 1) // trust first proxy
+// app.set('trust proxy', 1);
 app.use(session({
-  secret: 'keyboard cat',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: true }
+	secret: 'keyboard cat',
+	resave: false,
+	saveUninitialized: true,
+	cookie: { secure: true }
 }))
 
 /** 라우터설정 **********************/
 app.use('/', express.static(path.join(__dirname, './public')));
+
 
 /** 에러 처리 **********************/
 app.use((req, res, next) => {
@@ -48,23 +50,3 @@ app.use((err, req, res, next) => {
 	res.render('error/error.pug', pug);
 });
 
-
-
-
-
-// Callback Version : 앞으로 쓰지 않는다.
-
-/* app.get('/book/list', (req, res) => {
-	connection.query('SELECT * FROM books', function(err, r) {
-		for(let v of r) v.wdate = moment(v.wdate).format('YYYY-MM-DD');
-		const pug ={
-			css: 'book-list',
-			js: 'book-list',
-			title: '도서 리스트',
-			titleSub: '고전도서 리스트',
-			lists: r
-		}
-		res.render('book/list', pug);
-		console.log(r);
-	});
-}); */
