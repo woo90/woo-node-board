@@ -1,6 +1,6 @@
 extends ../layout/lo-default.pug
 block content
-	form(name='loginForm' method='post' action='/user/logon' onsubmit='return onSubmit(this)')
+	form(name='loginForm' method='post' action='/user/logon' onsubmit='return onSubmit(this);')
 		table.table.tb-login
 			tbody
 				tr
@@ -16,9 +16,9 @@ block content
 				i.fa.fa-key.mr-3
 				span 로그인
 		.text-center.py-3.border-top
-			button.btn.btn-info.ml-3(type="button" onClick=`location.href='/user/join';`)
+			button.btn.btn-info.ml-3(type="button" onclick=`location.href='/user/join';`)
 				i.fa.fa-user.mr-3
 				span 회원가입
-			button.btn.btn-warning(type="button" onClick=`location.href='/user/kakao';`)
+			button.btn.btn-warning(type="button" onclick=`location.href='/user/kakao';`)
 				i.fa.fa-comment.mr-3
 				span 카카오 로그인

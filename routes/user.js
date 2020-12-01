@@ -15,7 +15,7 @@ router.get('/join', isGuest, (req, res, next) => {
 	res.render('user/join', pug);
 });
 
-router.post('/save', async (req, res, next) => {
+router.post('/save', isGuest, async (req, res, next) => {
 	try {
 		req.body.userpw = await bcrypt.hash(req.body.userpw + process.env.BCRYPT_SALT, Number(process.env.BCRYPT_ROUND));
 		let rs = await sqlGen('users', 'I', {
@@ -32,7 +32,7 @@ router.post('/save', async (req, res, next) => {
 	}
 });
 
-router.get('/login', (req, res, next) => {
+router.get('/login', isGuest, (req, res, next) => {
 	const pug = { 
 		file: 'user-login', 
 		title: '회원 로그인',
