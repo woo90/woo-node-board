@@ -14,33 +14,21 @@ router.get('/join', (req, res, next) => {
 	res.render('user/join', pug);
 });
 
-router.post('/logon', async (req, res, next) => {
+router.post('/save', async (req, res, next) => {
 	try {
-		let msg = '아이디 또는 패스워드가 올바르지 않습니다.';
-		let rs = await sqlGen('users', 'S', { where:['userid', req.body.userid] });
-		if(rs[0].length > 0) {
-			let compare = await bcrypt.compare(req.body.userpw + process.env.BCRYPT_SALT, rs[0][0].userpw);
-			if(compare) {
-				// 세션처리
-				req.session.user = {
-					userid: rs[0][0].userid,
-					username: rs[0][0].username,
-					email: rs[0][0].email
-				}
-				res.send(alert('로그인 되었습니다', '/book'));
-			}
-			else res.send(alert(msg, '/user/login'));
-		}
-		else res.send(alert(msg, '/user/login'));
+		req.body.userpw = await bcrypt.hash(req.body.userpw + process.env.BCRYPT_SALT, Number(process.env.BCRYPT_ROUND));
+		let rs = await sqlGen('users', 'I', {
+			field: ['userid', 'userpw', 'username', 'email'],
+			data: req.body
+		});
+		if(rs[0].affectedRows == 1) 
+			res.send(alert('회원가입이 완료되었습니다. 로그인 해 주세요.', '/user/login'));
+		else
+			res.send(alert('회원가입이 실패하였습니다. 다시 시도해 주세요.', '/user/join'));
 	}
 	catch(e) {
 		next(error(500, e.sqlMessage || e));
 	}
-});
-
-router.get('/logout', (req, res, next) => {
-	req.session.destroy();
-	res.send(alert('로그아웃 되었습니다.', '/'));
 });
 
 router.get('/login', (req, res, next) => {
