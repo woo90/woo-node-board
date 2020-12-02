@@ -6,7 +6,7 @@ const path = require('path');
 const error = require('http-errors');
 const session = require('./modules/session-conn');
 const morgan = require('./modules/morgan-conn');
-const local = require('./modules/local-conn');
+const local = require('./modules/local.conn');
 
 /** 라우터 등록 **********************/
 const testRouter = require('./routes/test');
