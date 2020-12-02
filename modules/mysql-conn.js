@@ -7,8 +7,8 @@ const pool = mysql.createPool({
 	password: process.env.DB_PASS,
 	database: process.env.DB_NAME,
 	waitForConnections: true,
-	connectionLimit:10,
-	queueLimit:0
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 // SELECT * FROM books
@@ -29,14 +29,18 @@ const pool = mysql.createPool({
 // Object.entries({title: "제", writer: "자", wdate: "11-16"}).filter(v => field.includes(v[0]));
 
 const sqlGen = async (table, mode, obj) => {
-	let { field=[], data={}, file=null, where=null, order=[], limit=[] } = obj;
+	let { field=[], data={}, file=null, where=null, order=[], limit=[]  } = obj;
 	let sql=null, values=[], connect=null, rs=null;
 	let temp = Object.entries(data).filter(v => field.includes(v[0]));
 	
-	if(mode == 'I' || mode == 'i') sql = `INSERT INTO ${table} SET `;
-	if(mode == 'U' || mode == 'u') sql = `UPDATE ${table} SET `;
-	if(mode == 'D' || mode == 'd') sql = `DELETE FROM ${table} `;
-	if(mode == 'S' || mode == 's') sql = `SELECT ${field.length == 0 ? '*' : field.toString()} FROM ${table} `;
+	if(mode == 'I' || mode == 'i') 
+		sql = `INSERT INTO ${table} SET `;
+	if(mode == 'U' || mode == 'u') 
+		sql = `UPDATE ${table} SET `;
+	if(mode == 'D' || mode == 'd') 
+		sql = `DELETE FROM ${table} `;
+	if(mode == 'S' || mode == 's') 
+		sql = `SELECT ${field.length == 0 ? '*' : field.toString()} FROM ${table} `;
 
 	if(file) {
 		temp.push(['savefile', file.filename]); 
