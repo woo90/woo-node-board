@@ -2,7 +2,7 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 
 module.exports = () => {
-	return session ({
+	return session({
 		secret: process.env.SESSION_SALT,
 		resave: false,
 		saveUninitialized: true,

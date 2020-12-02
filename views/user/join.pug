@@ -1,7 +1,7 @@
 extends ../layout/lo-default.pug
 
 block content
-	form(name='joinForm' action='/user/save' method='post' onsubmit='return onJoin(this)')
+	form(name='joinForm' action='/user/save' method='post' onsubmit="return onSubmit(this);")
 		input(type="hidden" name="validUserid" value="")
 		input(type="hidden" name="validUserpw" value="")
 		input(type="hidden" name="validUsername" value="")
